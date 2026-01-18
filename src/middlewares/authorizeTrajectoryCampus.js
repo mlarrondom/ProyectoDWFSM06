@@ -3,14 +3,17 @@ const Trajectory = require('../models/Trajectory');
 const authorizeTrajectoryCampus = async (req, res, next) => {
     try {
         if (req.allowedCampus === null) {
-            return next(); // admin
+            return next();
         }
 
-        const { id } = req.params;
-        const trajectory = await Trajectory.findById(id).select('campus');
+        const certCode = Number(req.params.certCode);
+        if (Number.isNaN(certCode)) {
+            return res.status(400).json({ msg: 'certCode inválido' });
+        }
 
+        const trajectory = await Trajectory.findOne({ certCode }).select('campus');
         if (!trajectory) {
-            return res.status(404).json({ msg: 'Trayectoria no existe' });
+            return res.status(404).json({ msg: 'Trayectoria no encontrada' });
         }
 
         if (trajectory.campus !== req.allowedCampus) {

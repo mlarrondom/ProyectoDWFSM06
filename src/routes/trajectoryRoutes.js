@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const requirementRoutes = require('./requirementRoutes');
 
+const auth = require('../middlewares/auth');
+const resolveCampus = require('../middlewares/resolveCampus');
+const authorizeTrajectoryCampus = require('../middlewares/authorizeTrajectoryCampus');
+
+const requirementRoutes = require('./requirementRoutes');
 
 const {
     getAllTrajectories,
@@ -11,14 +15,20 @@ const {
     deleteTrajectory,
 } = require('../controllers/trajectoryController');
 
+// Seguridad base para todas las trayectorias
+router.use(auth);
+router.use(resolveCampus);
+
+// Trayectorias (colección)
 router.get('/', getAllTrajectories);
-router.get('/:certCode', getTrajectoryByCertCode);
 router.post('/', createTrajectory);
-router.patch('/:certCode', updateTrajectory);
-router.delete('/:certCode', deleteTrajectory);
 
-// Rutas anidadas de requisitos
-router.use('/:certCode/requirements', requirementRoutes);
+// Trayectoria específica (por certCode)
+router.get('/:certCode', authorizeTrajectoryCampus, getTrajectoryByCertCode);
+router.patch('/:certCode', authorizeTrajectoryCampus, updateTrajectory);
+router.delete('/:certCode', authorizeTrajectoryCampus, deleteTrajectory);
 
+// Rutas anidadas de requisitos (heredan auth + campus)
+router.use('/:certCode/requirements', authorizeTrajectoryCampus, requirementRoutes);
 
 module.exports = router;
