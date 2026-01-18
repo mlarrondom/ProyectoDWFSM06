@@ -235,9 +235,49 @@ const updateCreditsRequirement = async (req, res) => {
     }
 };
 
+
+// DELETE /api/trajectories/:certCode/requirements/:requirementId
+const deleteRequirement = async (req, res) => {
+    try {
+        const certCode = Number(req.params.certCode);
+        const { requirementId } = req.params;
+
+        // 1) Buscar trayectoria
+        const trajectory = await Trajectory.findOne({ certCode });
+        if (!trajectory) {
+            return res.status(404).json({ msg: 'Trayectoria no encontrada' });
+        }
+
+        // 2) Buscar requisito
+        const requirement = await Requirement.findById(requirementId);
+        if (!requirement) {
+            return res.status(404).json({ msg: 'Requisito no encontrado' });
+        }
+
+        // 3) Verificar pertenencia
+        if (requirement.trajectoryId.toString() !== trajectory._id.toString()) {
+            return res.status(400).json({
+                msg: 'El requisito no pertenece a esta trayectoria',
+            });
+        }
+
+        // 4) Eliminar
+        await Requirement.deleteOne({ _id: requirement._id });
+
+        return res.json({
+            msg: 'Requisito eliminado correctamente',
+            requirementId,
+        });
+    } catch (error) {
+        return res.status(500).json({ msg: 'Error al eliminar requisito' });
+    }
+};
+
+
 module.exports = {
     createRequirement,
     getRequirementsByTrajectory,
     replaceRequirementCourse,
     updateCreditsRequirement,
+    deleteRequirement,
 };

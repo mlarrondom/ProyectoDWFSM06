@@ -35,11 +35,9 @@ const trajectorySchema = new mongoose.Schema(
             enum: OWNER_UNITS,
         },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+    }
 );
 
-trajectorySchema.index({ certCode: 1 }, { unique: true });
-
 module.exports = mongoose.model('Trajectory', trajectorySchema);
-module.exports.CAMPUSES = CAMPUSES;
-module.exports.OWNER_UNITS = OWNER_UNITS;
