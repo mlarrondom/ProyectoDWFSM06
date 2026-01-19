@@ -9,7 +9,7 @@ const getAllCertifications = async (req, res) => {
 
         const certifications = await Certification.find(filter)
             .sort({ certCode: 1 })
-            .select('certCode name campus ownerUnit');
+            .select('certCode name campus ownerUnit createdBy');
 
         res.json({ certifications });
     } catch (error) {
@@ -74,6 +74,7 @@ const createCertification = async (req, res) => {
             name,
             campus,
             ownerUnit,
+            createdBy: req.user.id, 
         });
 
         return res.status(201).json({ certification });
@@ -81,6 +82,7 @@ const createCertification = async (req, res) => {
         return res.status(500).json({ msg: 'Error al crear certificación' });
     }
 };
+
 
 // PUT /api/certifications/:certCode
 const updateCertification = async (req, res) => {

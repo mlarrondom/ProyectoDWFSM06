@@ -7,7 +7,35 @@ const courseRoutes = require('./routes/courseRoutes');
 const certificationRoutes = require('./routes/certificationRoutes');
 const userRoutes = require('./routes/userRoutes');
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+
 const app = express();
+
+// Swagger config
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'Proyecto M06 - Certifications API',
+            version: '1.0.0',
+            description: 'API REST para gestión de usuarios y certificaciones (M06)',
+        },
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                },
+            },
+        },
+        security: [{ bearerAuth: [] }],
+    },
+    apis: ['./src/routes/*.js'], // ajusta si tu estructura es distinta
+};
+
+const specs = swaggerJsdoc(swaggerOptions);
 
 // Conexión DB
 connectDB();
@@ -15,6 +43,10 @@ connectDB();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+
+// Swagger routes (antes del listen)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+app.get('/openapi.json', (req, res) => res.json(specs));
 
 // Rutas
 app.use('/api/user', userRoutes);

@@ -34,10 +34,15 @@ const certificationSchema = new mongoose.Schema(
             required: true,
             enum: OWNER_UNITS,
         },
+        createdBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: false,
+        },
     },
     {
         timestamps: true,
-    }
+    },
 );
 
 const Certification = mongoose.model('Certification', certificationSchema);
@@ -46,4 +51,3 @@ Certification.CAMPUSES = CAMPUSES;
 Certification.OWNER_UNITS = OWNER_UNITS;
 
 module.exports = Certification;
-
