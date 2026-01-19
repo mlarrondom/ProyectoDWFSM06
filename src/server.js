@@ -19,7 +19,8 @@ const swaggerOptions = {
         info: {
             title: 'Proyecto M06 - Certifications API',
             version: '1.0.0',
-            description: 'API REST para gestión de usuarios y certificaciones (M06)',
+            description:
+                'API REST para gestión de usuarios y certificaciones (M06)',
         },
         components: {
             securitySchemes: {
@@ -59,6 +60,8 @@ app.get('/', (req, res) => {
 });
 
 // Servidor
-app.listen(process.env.PORT, () => {
-    console.log(`Servidor corriendo en puerto ${process.env.PORT}`);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en puerto ${PORT}`);
 });
