@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 
 const requirementSchema = new mongoose.Schema(
     {
-        trajectoryId: {
+        certificationId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Trajectory',
+            ref: 'Certification',
             required: true,
         },
         group: {
@@ -39,7 +39,7 @@ const requirementSchema = new mongoose.Schema(
 
 // Evita duplicados: mismo curso repetido dentro de una trayectoria (cuando es COURSE)
 requirementSchema.index(
-    { trajectoryId: 1, courseId: 1 },
+    { certificationId: 1, courseId: 1 },
     { unique: true, partialFilterExpression: { courseId: { $type: 'objectId' } } }
 );
 

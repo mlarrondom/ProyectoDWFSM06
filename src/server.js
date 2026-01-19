@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const connectDB = require('./config/db');
 const courseRoutes = require('./routes/courseRoutes');
-const trajectoryRoutes = require('./routes/trajectoryRoutes');
+const certificationRoutes = require('./routes/certificationRoutes');
 const userRoutes = require('./routes/userRoutes');
 
 const app = express();
@@ -19,11 +19,11 @@ app.use(express.json());
 // Rutas
 app.use('/api/user', userRoutes);
 app.use('/api/courses', courseRoutes);
-app.use('/api/trajectories', trajectoryRoutes);
+app.use('/api/certifications', certificationRoutes);
 
 // Ruta de salud
 app.get('/', (req, res) => {
-    res.send('API ProyectoM06 - Trayectorias funcionando');
+    res.send('API ProyectoM06 - Certificaciones funcionando');
 });
 
 // Servidor

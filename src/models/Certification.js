@@ -12,7 +12,7 @@ const OWNER_UNITS = [
     'EsploraTec',
 ];
 
-const trajectorySchema = new mongoose.Schema(
+const certificationSchema = new mongoose.Schema(
     {
         certCode: {
             type: Number,
@@ -40,4 +40,10 @@ const trajectorySchema = new mongoose.Schema(
     }
 );
 
-module.exports = mongoose.model('Trajectory', trajectorySchema);
+const Certification = mongoose.model('Certification', certificationSchema);
+
+Certification.CAMPUSES = CAMPUSES;
+Certification.OWNER_UNITS = OWNER_UNITS;
+
+module.exports = Certification;
+

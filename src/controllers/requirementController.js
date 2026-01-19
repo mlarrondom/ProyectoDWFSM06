@@ -1,8 +1,8 @@
-const Trajectory = require('../models/Trajectory');
+const Certification = require('../models/Certification');
 const Course = require('../models/Course');
 const Requirement = require('../models/Requirement');
 
-// POST /api/trajectories/:certCode/requirements
+// POST /api/certifications/:certCode/requirements
 const createRequirement = async (req, res) => {
     try {
         const certCode = Number(req.params.certCode);
@@ -13,10 +13,10 @@ const createRequirement = async (req, res) => {
             return res.status(400).json({ msg: 'Faltan campos obligatorios (group, condition, type)' });
         }
 
-        // 2) Buscar trayectoria por certCode (negocio)
-        const trajectory = await Trajectory.findOne({ certCode });
-        if (!trajectory) {
-            return res.status(404).json({ msg: 'Trayectoria no encontrada' });
+        // 2) Buscar certificación por certCode (negocio)
+        const certification = await Certification.findOne({ certCode });
+        if (!certification) {
+            return res.status(404).json({ msg: 'Certificación no encontrada' });
         }
 
         // 3) Reglas por tipo
@@ -32,19 +32,19 @@ const createRequirement = async (req, res) => {
                 return res.status(400).json({ msg: 'Créditos debe ser un número mayor a 0' });
             }
 
-            // Solo 1 requisito de créditos por trayectoria
+            // Solo 1 requisito de créditos por certificación
             const creditsExists = await Requirement.findOne({
-                trajectoryId: trajectory._id,
+                certificationId: certification._id, // OJO: se mantiene certificationId por compatibilidad
                 type: 'CREDITS',
                 group: 1,
             });
 
             if (creditsExists) {
-                return res.status(409).json({ msg: 'Ya existe un requisito de créditos (group 1) para esta trayectoria' });
+                return res.status(409).json({ msg: 'Ya existe un requisito de créditos (group 1) para esta certificación' });
             }
 
             const requirement = await Requirement.create({
-                trajectoryId: trajectory._id,
+                certificationId: certification._id,
                 group: 1,
                 condition: 'Y',
                 type: 'CREDITS',
@@ -60,10 +60,10 @@ const createRequirement = async (req, res) => {
 
         if (type === 'COURSE') {
             if (!courseCode) {
-                return res.status(400).json({ msg: 'Para curso debes enviar un código váliddo' });
+                return res.status(400).json({ msg: 'Para curso debes enviar un código válido' });
             }
 
-            // Validar curso contra catálogo maestro (lo que quieres demostrar)
+            // Validar curso contra catálogo maestro
             const course = await Course.findOne({ courseCode });
             if (!course) {
                 return res.status(400).json({ msg: 'Código de curso no existe en el sistema' });
@@ -71,7 +71,7 @@ const createRequirement = async (req, res) => {
 
             // Crear requisito COURSE
             const requirement = await Requirement.create({
-                trajectoryId: trajectory._id,
+                certificationId: certification._id,
                 group: Number(group),
                 condition,
                 type: 'COURSE',
@@ -85,27 +85,27 @@ const createRequirement = async (req, res) => {
             });
         }
 
-        return res.status(400).json({ msg: 'Tipo de rquisito inválido (usa CREDITS (créditos) o COURSE (curso))' });
+        return res.status(400).json({ msg: 'Tipo de requisito inválido (usa CREDITS (créditos) o COURSE (curso))' });
     } catch (error) {
-        // Duplicado por índice (mismo courseId en misma trajectoryId)
+        // Duplicado por índice (mismo courseId en misma certificationId)
         if (error.code === 11000) {
-            return res.status(409).json({ msg: 'El curso ya está agregado como requisito en esta trayectoria' });
+            return res.status(409).json({ msg: 'El curso ya está agregado como requisito en esta certificación' });
         }
         return res.status(500).json({ msg: 'Error al crear requisito' });
     }
 };
 
-// GET /api/trajectories/:certCode/requirements
-const getRequirementsByTrajectory = async (req, res) => {
+// GET /api/certifications/:certCode/requirements
+const getRequirementsByCertification = async (req, res) => {
     try {
         const certCode = Number(req.params.certCode);
 
-        const trajectory = await Trajectory.findOne({ certCode });
-        if (!trajectory) {
-            return res.status(404).json({ msg: 'Trayectoria no encontrada' });
+        const certification = await Certification.findOne({ certCode });
+        if (!certification) {
+            return res.status(404).json({ msg: 'Certificación no encontrada' });
         }
 
-        const requirements = await Requirement.find({ trajectoryId: trajectory._id })
+        const requirements = await Requirement.find({ certificationId: certification._id })
             .sort({ group: 1, createdAt: 1 })
             .populate('courseId', 'courseCode name credits');
 
@@ -131,7 +131,7 @@ const getRequirementsByTrajectory = async (req, res) => {
     }
 };
 
-// PATCH /api/trajectories/:certCode/requirements/:requirementId
+// PATCH /api/certifications/:certCode/requirements/:requirementId
 // Caso de uso: reemplazar curso
 const replaceRequirementCourse = async (req, res) => {
     try {
@@ -143,9 +143,9 @@ const replaceRequirementCourse = async (req, res) => {
             return res.status(400).json({ msg: 'Debes enviar código de curso' });
         }
 
-        const trajectory = await Trajectory.findOne({ certCode });
-        if (!trajectory) {
-            return res.status(404).json({ msg: 'Trayectoria no encontrada' });
+        const certification = await Certification.findOne({ certCode });
+        if (!certification) {
+            return res.status(404).json({ msg: 'Certificación no encontrada' });
         }
 
         const requirement = await Requirement.findById(requirementId);
@@ -153,9 +153,9 @@ const replaceRequirementCourse = async (req, res) => {
             return res.status(404).json({ msg: 'Requisito no encontrado' });
         }
 
-        // Asegura que el requisito pertenece a la trayectoria indicada
-        if (requirement.trajectoryId.toString() !== trajectory._id.toString()) {
-            return res.status(400).json({ msg: 'El requisito no pertenece a esta trayectoria' });
+        // Asegura que el requisito pertenece a la certificación indicada
+        if (requirement.certificationId.toString() !== certification._id.toString()) {
+            return res.status(400).json({ msg: 'El requisito no pertenece a esta certificación' });
         }
 
         if (requirement.type !== 'COURSE') {
@@ -176,7 +176,7 @@ const replaceRequirementCourse = async (req, res) => {
         });
     } catch (error) {
         if (error.code === 11000) {
-            return res.status(409).json({ msg: 'Ese curso ya está agregado como requisito en esta trayectoria' });
+            return res.status(409).json({ msg: 'Ese curso ya está agregado como requisito en esta certificación' });
         }
         return res.status(500).json({ msg: 'Error al reemplazar curso del requisito' });
     }
@@ -197,10 +197,10 @@ const updateCreditsRequirement = async (req, res) => {
             });
         }
 
-        // Buscar trayectoria por certCode
-        const trajectory = await Trajectory.findOne({ certCode });
-        if (!trajectory) {
-            return res.status(404).json({ msg: 'Trayectoria no encontrada' });
+        // Buscar certificación por certCode
+        const certification = await Certification.findOne({ certCode });
+        if (!certification) {
+            return res.status(404).json({ msg: 'Certificación no encontrada' });
         }
 
         // Buscar requisito por ID técnico
@@ -209,9 +209,9 @@ const updateCreditsRequirement = async (req, res) => {
             return res.status(404).json({ msg: 'Requisito no encontrado' });
         }
 
-        // Verificar pertenencia a la trayectoria
-        if (requirement.trajectoryId.toString() !== trajectory._id.toString()) {
-            return res.status(400).json({ msg: 'El requisito no pertenece a esta trayectoria' });
+        // Verificar pertenencia a la certificación
+        if (requirement.certificationId.toString() !== certification._id.toString()) {
+            return res.status(400).json({ msg: 'El requisito no pertenece a esta certificación' });
         }
 
         // Solo aplica a requisitos tipo CREDITS
@@ -235,17 +235,16 @@ const updateCreditsRequirement = async (req, res) => {
     }
 };
 
-
-// DELETE /api/trajectories/:certCode/requirements/:requirementId
+// DELETE /api/certifications/:certCode/requirements/:requirementId
 const deleteRequirement = async (req, res) => {
     try {
         const certCode = Number(req.params.certCode);
         const { requirementId } = req.params;
 
-        // 1) Buscar trayectoria
-        const trajectory = await Trajectory.findOne({ certCode });
-        if (!trajectory) {
-            return res.status(404).json({ msg: 'Trayectoria no encontrada' });
+        // 1) Buscar certificación
+        const certification = await Certification.findOne({ certCode });
+        if (!certification) {
+            return res.status(404).json({ msg: 'Certificación no encontrada' });
         }
 
         // 2) Buscar requisito
@@ -255,9 +254,9 @@ const deleteRequirement = async (req, res) => {
         }
 
         // 3) Verificar pertenencia
-        if (requirement.trajectoryId.toString() !== trajectory._id.toString()) {
+        if (requirement.certificationId.toString() !== certification._id.toString()) {
             return res.status(400).json({
-                msg: 'El requisito no pertenece a esta trayectoria',
+                msg: 'El requisito no pertenece a esta certificación',
             });
         }
 
@@ -273,10 +272,9 @@ const deleteRequirement = async (req, res) => {
     }
 };
 
-
 module.exports = {
     createRequirement,
-    getRequirementsByTrajectory,
+    getRequirementsByCertification,
     replaceRequirementCourse,
     updateCreditsRequirement,
     deleteRequirement,
